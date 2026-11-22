@@ -1,8 +1,8 @@
-import { handler, send, redis, body, isAdmin, SETTINGS_DEFAULT, K } from './_lib.js';
+import { handler, send, redis, body, isAdmin, hashObj, SETTINGS_DEFAULT, K } from './_lib.js';
 
 async function read() {
   const out = { ...SETTINGS_DEFAULT };
-  const h = (await redis().hgetall(K.settings)) || {};
+  const h = hashObj(await redis().hgetall(K.settings));
   for (const k of Object.keys(out)) if (k in h) { try { out[k] = JSON.parse(h[k]); } catch { /* */ } }
   return out;
 }

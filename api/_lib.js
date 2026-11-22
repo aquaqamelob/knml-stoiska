@@ -41,6 +41,15 @@ export function redis() {
   return client;
 }
 
+/** HGETALL bez automatycznej deserializacji zwraca płaską tablicę [pole, wartość, ...]; zamieniamy na obiekt. */
+export function hashObj(v) {
+  if (!v) return {};
+  if (!Array.isArray(v)) return v;
+  const o = {};
+  for (let i = 0; i + 1 < v.length; i += 2) o[v[i]] = v[i + 1];
+  return o;
+}
+
 export const winPoint = (s) => (s > 0.5 + 1e-9 ? 1 : s < 0.5 - 1e-9 ? 0 : 0.5);
 const r4 = (x) => Math.round(x * 1e4) / 1e4;
 
@@ -51,7 +60,7 @@ export async function readStats(day) {
   p.zscore(K.rec(day), 'autopilot');
   p.get(K.all);
   const [h, recMind, recAuto, all] = await p.exec();
-  const hash = h || {};
+  const hash = hashObj(h);
   const num = (k) => Number(hash[k] || 0);
   const n = num('n');
   const byGame = {};
