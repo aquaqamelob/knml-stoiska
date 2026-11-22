@@ -17,13 +17,21 @@ function writeLocal(v) {
   try { localStorage.setItem(LS_KEY, JSON.stringify(v)); } catch { /* tryb prywatny */ }
 }
 
+// Hasło obsługi (ustawiane po zalogowaniu w panelu) - serwer na Vercelu wymaga go do zerowania
+// statystyk i zmiany ustawień; backend w Dockerze ten nagłówek ignoruje.
+let adminPass = '';
+export function setAdminPass(p) { adminPass = String(p || ''); }
+
 async function req(method, url, body) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 3500);
   try {
     const r = await fetch(url, {
       method,
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      headers: {
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(adminPass && method !== 'GET' ? { 'X-Admin-Pass': adminPass } : {}),
+      },
       body: body ? JSON.stringify(body) : undefined,
       signal: ctrl.signal,
     });

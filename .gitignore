@@ -12,3 +12,9 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# Vercel / Node
+node_modules/
+.vercel/
+.env*
+frontend/logo/
