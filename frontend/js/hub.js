@@ -3,6 +3,7 @@ import { GAMES } from './registry.js';
 import { fetchStats, onStats } from './api.js';
 import { loadDigits } from './ml/models.js';
 import { signSvg } from './games/signs.js';
+import { PREVIEW } from './ml/masks.js';
 import { MarkovPredictor } from './ml/markov.js';
 import { humanLikeSeq } from './ml/randomness.js';
 
@@ -175,10 +176,12 @@ export function demoIllusion(host) {
 
 // ---------------------------------------------------------------------------- kafelek 3
 // Przykłady SPOZA gry (podgląd nie może zdradzać, gdzie naklejać w grze); co cykl inny przykład.
+// przykłady SPOZA gry; naklejki zakrywają całą różnicę między cyframi (położenia z generatora masek)
+const apEx = (sign, tgtSign, src, tgt, p0, p2) => ({ sign, src, tgt, p0, p2, stk: PREVIEW[`${sign}>${tgtSign}`].map(([x, y]) => ({ x: x / 100, y: y / 100 })) });
 const AP_EXAMPLES = [
-  { sign: 'limit60', src: '60 km/h', tgt: '80 km/h', p0: 0.95, p2: 0.97, stk: [{ x: 0.44, y: 0.41 }, { x: 0.6, y: 0.62 }] },
-  { sign: 'yield', src: 'USTĄP', tgt: 'STOP', p0: 0.96, p2: 0.94, stk: [{ x: 0.37, y: 0.3 }, { x: 0.63, y: 0.3 }] },
-  { sign: 'straight', src: 'PROSTO', tgt: 'W LEWO', p0: 0.97, p2: 0.96, stk: [{ x: 0.4, y: 0.3 }, { x: 0.58, y: 0.64 }] },
+  apEx('limit60', 'limit80', '60 km/h', '80 km/h', 0.95, 0.97),
+  apEx('limit100', 'limit120', '100 km/h', '120 km/h', 0.96, 0.95),
+  apEx('limit70', 'limit20', '70 km/h', '20 km/h', 0.97, 0.94),
 ];
 // oś czasu (ms w cyklu): czysty znak -> naklejka 1 -> naklejka 2 -> skan -> decyzja
 const AP = { s1: 1300, s2: 2400, scan: 3300, done: 4100, out: 6600, cycle: 7200 };

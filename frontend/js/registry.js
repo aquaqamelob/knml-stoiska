@@ -28,9 +28,9 @@ export const GAMES = [
   },
   {
     id: 'autopilot', title: 'Oszukaj autopilot', tech: 'Ataki adwersarialne',
-    line: ['Przyklej 2 naklejki.', 'AI zobaczy inny znak.'],
+    line: ['Zaklej część znaku.', 'AI zobaczy inny znak.'],
     intro: {
-      you: 'Naklejasz 2 naklejki na znak drogowy',
+      you: 'Zaklejasz naklejkami to, czym znak różni się od innego',
       ai: 'Kamera auta rozpoznaje znak i decyduje, co zrobić',
       stats: [['1', 'skan kamery na znak, bez poprawek'], ['80%', 'pewności celu i znak zhakowany'], ['3 / 5', 'zhakowanych znaków i wygrywasz']],
     },

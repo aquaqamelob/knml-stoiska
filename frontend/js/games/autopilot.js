@@ -1,7 +1,7 @@
-// Gra 3: "Oszukaj Autopilot" - tryb "w ciemno": gracz układa 2 naklejki bez podpowiedzi,
+// Gra 3: "Oszukaj autopilot" - tryb "w ciemno": gracz układa naklejki (1 lub 2, tyle ile naprawdę trzeba) bez podpowiedzi,
 // a wynik (i mapę uwagi AI) widzi dopiero po kliknięciu "SPRAWDŹ KAMERĘ AI". 1 skan na znak.
 // Karta po prawej pokazuje pełny rozkład softmax (znak, cel, inne znaki), zaokrąglony tak, by suma = 100%.
-import { el, resultScreen, esc, pcts } from '../ui.js';
+import { el, resultScreen, esc, pcts, plural } from '../ui.js';
 import { SCENARIOS, evaluate, drawHeat } from '../ml/attention.js';
 import { signSvg } from './signs.js';
 import { camLayers, camFx } from './apcam.js';
@@ -12,11 +12,13 @@ const TRIES = 1;   // jeden skan na znak - trzeba dobrze pomyśleć przed sprawd
 const CAM = { w: 1208, h: 800 };
 const SIGN = { x: 250, y: 170, size: 440 };
 const PAD = 0.16;                       // margines płótna mapy uwagi wokół znaku
-const STK = 96;
-const HOME = [{ x: 1000, y: 320 }, { x: 1000, y: 500 }];
+const RING = 4;                          // biała obwódka naklejki (px), liczona do jej widocznego boku
+/** miejsca startowe n naklejek w panelu "Naklejki" (jedna pod drugą, wyśrodkowane przy znaku) */
+const nakl = (n) => `${n} ${plural(n, 'naklejkę', 'naklejki', 'naklejek')}`;
+const homes = (n, side) => Array.from({ length: n }, (_, j) => ({ x: 1000, y: Math.round(SIGN.y + SIGN.size / 2 + (j - (n - 1) / 2) * (side + 36)) }));
 const SCAN_MS = 600;
 const HEAT_MS = 2000;
-const SIGN_NAME = { stop: 'STOP', limit50: '50 km/h', limit30: '30 km/h', crossing: 'przejścia dla pieszych', right: 'nakazu jazdy w prawo' };
+const SIGN_NAME = { limit30: '30 km/h', priorityend: 'końca drogi z pierwszeństwem', limit50: '50 km/h', nostopping: 'zakazu zatrzymywania się', limit20: '20 km/h' };
 const NEED_WINS = 3;   // człowiek wygrywa grę przy 3 z 5 zhakowanych znaków, inaczej wygrywa AI
 
 export function mount(stage, ctx) {
@@ -50,7 +52,7 @@ async function play(stage, ctx) {
   for (let r = 0; r < SCENARIOS.length; r++) {
     ctx.setHud(hudTotal(r, results, SCENARIOS.length));
     const sc = SCENARIOS[r];
-    ctx.setGoal(`Przyklej 2 naklejki na znaku <b class="src">${esc(SIGN_NAME[sc.sign])}</b>, aby zmylić kamerę!`);
+    ctx.setGoal(`Przyklej ${nakl(sc.n)} na znaku <b class="src">${esc(SIGN_NAME[sc.sign])}</b>, aby zmylić kamerę!`);
     const ok = await round(stage, ctx, sc, r === SCENARIOS.length - 1);
     if (ok == null || ctx.signal.aborted) return null;
     results.push(ok);
@@ -62,7 +64,7 @@ async function play(stage, ctx) {
     score: `${won}/${SCENARIOS.length}`,
     scoreLabel: 'znaki zhakowane',
     headline: won === SCENARIOS.length ? 'Autopilot całkowicie oszukany!' : human ? 'Autopilot oszukany!' : 'Autopilot się obronił',
-    body: el(`<p class="lesson__note lesson__note--big">Sieć patrzy na kilka charakterystycznych miejsc znaku. Wystarczy je zasłonić, by zmylić kamerę auta. Dlatego pojazdy autonomiczne, tak jak robot obok, łączą kamerę z innymi czujnikami.</p>`),
+    body: el(`<p class="lesson__note lesson__note--big">Gdy naklejki zasłonią to, czym dwa znaki się różnią, sieć nie mówi „nie wiem”, tylko pewnie wybiera zły znak. Dlatego pojazdy autonomiczne, tak jak robot obok, łączą kamerę z innymi czujnikami i mapą.</p>`),
     tone: human ? 'go' : 'stop',
   };
 }
@@ -79,8 +81,12 @@ const dist = (r) => {
 
 function round(stage, ctx, sc, last) {
   return new Promise((resolve) => {
-    const p0 = dist(evaluate(sc, [null, null]));
-    const L = camLayers({ SIGN, HOME });
+    const p0 = dist(evaluate(sc, []));
+    const N = sc.n;
+    const SIDE = Math.round(sc.stk * SIGN.size);          // widoczny bok naklejki (z obwódką)
+    const STK = SIDE - 2 * RING;
+    const HOME = homes(N, SIDE);
+    const L = camLayers({ SIGN, HOME, side: SIDE });
     const node = el(`
       <div class="ap ap--v5 ap--net enter">
         <div class="ap__main">
@@ -96,7 +102,7 @@ function round(stage, ctx, sc, last) {
             </div>
             ${L.front}
             ${L.tray}
-            ${[0, 1].map((j) => `<div class="stk" data-j="${j}" style="width:${STK}px;height:${STK}px"><canvas class="stk__img"></canvas></div>`).join('')}
+            ${HOME.map((_, j) => `<div class="stk" data-j="${j}" style="width:${STK}px;height:${STK}px"><canvas class="stk__img"></canvas></div>`).join('')}
             <span class="cam-frame"></span>
           </figure>
           ${cardMarkup(sc, p0)}
@@ -129,7 +135,7 @@ function round(stage, ctx, sc, last) {
       if (phase === 'won') { btn.classList.add('is-next'); btn.textContent = last ? 'Zobacz wynik →' : 'Następny znak →'; return; }
       if (phase === 'lost') { btn.classList.add('is-lost'); btn.textContent = last ? 'Zobacz wynik →' : 'Następny znak →'; return; }
       if (phase === 'scan') { btn.classList.add('is-scan'); btn.disabled = true; btn.textContent = 'SKANOWANIE…'; return; }
-      if (placed < 2) { btn.classList.add('is-idle'); btn.disabled = true; btn.textContent = `Przeciągnij 2 naklejki na znak (${placed}/2)`; return; }
+      if (placed < N) { btn.classList.add('is-idle'); btn.disabled = true; btn.textContent = `Przeciągnij ${nakl(N)} na znak (${placed}/${N})`; return; }
       btn.classList.add('is-ready');
       btn.textContent = 'SPRAWDŹ KAMERĘ AI';
     };
@@ -209,7 +215,7 @@ function round(stage, ctx, sc, last) {
       node.classList.add('is-scanning');
       setTimeout(() => {
         node.classList.remove('is-scanning');
-        const st = pos.map(toSign);
+        const st = pos.map((p) => (onSign(p) ? toSign(p) : null));
         const r = evaluate(sc, st);
         heatState = { st, S: r.S };
         heatUntil = performance.now() + HEAT_MS;

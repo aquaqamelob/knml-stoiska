@@ -472,6 +472,7 @@ figure { margin: 0; }
 .stk.is-drag { cursor: grabbing; z-index: 6; }
 .stk__img { display: block; width: 100%; height: 100%; border-radius: 10px; image-rendering: pixelated; box-shadow: 0 0 0 4px rgba(246, 246, 242, .9), 0 10px 22px rgba(0, 0, 0, .55); transform: rotate(-5deg); transition: transform 150ms; }
 .stk[data-j="1"] .stk__img { transform: rotate(4deg); }
+.stk[data-j="2"] .stk__img { transform: rotate(-2deg); }
 .stk.is-drag .stk__img { transform: rotate(0) scale(1.06); }
 .stk__ring { position: absolute; left: 50%; top: 50%; width: 180px; height: 180px; transform: translate(-50%, -50%); pointer-events: none; opacity: 0; transition: opacity 150ms; }
 .stk.is-on .stk__ring, .stk.is-drag .stk__ring { opacity: 1; }
@@ -1083,6 +1084,17 @@ figure { margin: 0; }
 .r3-pos { font-family: var(--cond); font-weight: 600; font-size: 44px; line-height: 1; color: var(--route); white-space: nowrap; }
 .il__card.is-over .r3-pos { color: var(--go); }
 .r3-goal .il__delta { font-size: 34px; }
+/* dwie wyśrodkowane linijki: "9 jest na 4. miejscu" i niżej "ma być na 1. miejscu"; zmiana "+6%" wskakuje
+   tuż obok pierwszej linijki, ale poza jej szerokością, więc tekst nie przeskakuje */
+.r3-goal { flex-direction: column; align-items: center; gap: 10px; }
+.r3-line { position: relative; display: block; }
+.r3-line .il__delta { position: absolute; left: calc(100% + 16px); bottom: 3px; white-space: nowrap; }
+.r3-need { font-family: var(--cond); font-weight: 500; font-size: 28px; line-height: 1; color: var(--concrete); transition: opacity 250ms; }
+.r3-goal.is-first .r3-need { opacity: 0; }
+/* równe odstępy nad i pod dwiema linijkami (karta ma stałą wysokość 760 px) */
+.il__card .r3-goal { padding-top: 22px; padding-bottom: 22px; gap: 8px; }
+.il__card .r3-goal .r3-need { font-size: 26px; }
+.il__card .il__sec--foot { padding-top: 22px; gap: 20px; }
 
 /* ============================================================================
    v14: podglądy gier (kafelki i wstęp)
