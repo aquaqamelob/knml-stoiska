@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "mkdir -p frontend/logo && cp assets/logo-kolo.png frontend/logo/kolo.png && cp assets/logo-rzeszow.png frontend/logo/rzeszow.png",
+  "outputDirectory": "frontend",
+  "rewrites": [
+    { "source": "/logo/:name(kolo|rzeszow)", "destination": "/logo/:name.png" }
+  ],
+  "headers": [
+    { "source": "/fonts/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800, immutable" }] },
+    { "source": "/((?!fonts/|api/).*)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+    { "source": "/api/(.*)", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }
+  ]
+}

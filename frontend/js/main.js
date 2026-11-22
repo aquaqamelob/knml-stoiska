@@ -2,7 +2,7 @@ import { renderHub } from './hub.js';
 import { openGame } from './shell.js';
 import { byId } from './registry.js';
 import { reducedMotion, el } from './ui.js';
-import { resetToday, getSettings, saveSettings } from './api.js';
+import { resetToday, getSettings, saveSettings, setAdminPass } from './api.js';
 import { preloadModels } from './ml/models.js';
 
 // --- scena 1920x1080 skalowana do monitora (tak samo jak na ekranie robota ADAS) -------------
@@ -131,6 +131,7 @@ function openAdmin() {
         input.focus();
         return;
       }
+      setAdminPass(input.value.trim());
       panel();
     });
     input.focus();

@@ -20,6 +20,21 @@ Aktualizacja na innym komputerze: `git pull` i ponownie `docker compose up --bui
 
 Zatrzymanie: `docker compose down`. Statystyki dnia i wspólna pamięć n-gramów zostają w wolumenie `kiosk-data`. Polecenie `docker compose down -v` je usuwa.
 
+## Wersja online (Vercel + Upstash Redis)
+
+Ta sama strona może działać w internecie bez Dockera: frontend jest statyczny, a API z `backend/main.py` ma odpowiednik w funkcjach Vercela (`api/*.js`), które trzymają statystyki dnia, rekordy dnia, n-gramy i ustawienia w Upstash Redis zamiast SQLite.
+
+1. Na [vercel.com](https://vercel.com) zaimportuj to repozytorium (New Project). Ustawienia budowania są w `vercel.json`, nic nie zmieniaj.
+2. Redis: w projekcie Vercel → Storage → Upstash (Redis) → utwórz bazę i podłącz do projektu. Zmienne ustawią się same.
+   Albo ręcznie (Settings → Environment Variables), z zakładki REST API bazy w konsoli Upstash:
+   - `UPSTASH_REDIS_REST_URL` (np. `https://xxx.upstash.io`)
+   - `UPSTASH_REDIS_REST_TOKEN`
+3. Opcjonalnie `ADMIN_PASS` – hasło obsługi sprawdzane przez serwer przy zerowaniu statystyk i zmianie ustawień (domyślnie `KNML`). Jeśli je zmienisz, zmień też `ADMIN_PASS` w `frontend/js/main.js`.
+4. Redeploy. Sprawdzenie: `https://<twoja-domena>/api/health`.
+
+Klucze w Redisie mają prefiks `kiosk:`; dane dnia wygasają po 400 dniach (schemat w `api/_lib.js`). Gdy Redis jest niedostępny, frontend jak dotąd liczy statystyki lokalnie i dosyła wyniki później.
+Logotypy na Vercelu są brane z `assets/` w czasie budowania – podmiana wymaga nowego deploya.
+
 ## Gry
 
 Zasada projektu: zero suwaków i instrukcji, wszystko samą myszką w 1–2 sekundy po podejściu do monitora.
@@ -74,6 +89,8 @@ frontend/                  strona (czysty JS, bez kroku budowania)
   js/games/                mind.js, illusion.js, autopilot.js, signs.js (znaki wektorowe)
   js/ml/                   markov.js (n-gramy), mlp.js (sieć MLP), attention.js (model uwagi), models.js
   model/                   digits-mlp.json (wagi sieci + poziomy)
+api/                       to samo API jako funkcje Vercel (Upstash Redis)
+vercel.json                konfiguracja Vercel (statyczny frontend + rewrite logotypów)
 assets/                    logotypy (montowane do kontenera)
 training/                  skrypty, którymi przygotowano modele (niepotrzebne do działania)
 ```
