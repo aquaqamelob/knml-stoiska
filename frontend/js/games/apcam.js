@@ -75,10 +75,12 @@ function scene() {
  * Warstwy kamery: back (scena, pod słupkiem znaku), mid (między słupkiem a znakiem),
  * front (nad znakiem, pod naklejkami) i tray (panel z naklejkami - ich miejsce startowe).
  */
-export function camLayers({ SIGN, HOME }) {
-  const trayBox = `left:${HOME[0].x - 90}px;top:${HOME[0].y - 115}px;height:${HOME[1].y - HOME[0].y + 230}px`;
+export function camLayers({ SIGN, HOME, side = 104 }) {
+  // panel dopasowany do liczby i wielkości naklejek (2 lub 3, różne rozmiary dla różnych znaków)
+  const w = Math.max(180, side + 48), top = HOME[0].y - side / 2 - 64, last = HOME[HOME.length - 1].y;
+  const trayBox = `left:${HOME[0].x - w / 2}px;top:${top}px;width:${w}px;height:${last - HOME[0].y + side + 64 + 24}px`;
   // okrągłe znaczniki miejsc (wyglądają tak samo przy każdym obrocie naklejki); mniejsze niż naklejka, więc są pod nią schowane
-  const slots = HOME.map((p) => `<i class="tray__slot" style="left:${90 - 40}px;top:${115 + (p.y - HOME[0].y) - 40}px"></i>`).join('');
+  const slots = HOME.map((p) => `<i class="tray__slot" style="left:${w / 2 - 40}px;top:${p.y - top - 40}px"></i>`).join('');
   return {
     back: scene(),
     mid: `<div class="cam-pix"></div><div class="cam-anchors"></div>
